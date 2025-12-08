@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 
 from .actions import deactivate_users
-from apps.accounts.models import Employee
+from apps.accounts.models import Employee, EmployeePayment
 
 User = get_user_model()
 
@@ -106,7 +106,7 @@ class EmployeeAdmin(admin.ModelAdmin):
         'phone_number',
         'profession',
         'share',
-        'total_share',
+        'total_salary',
         'employer',
         'created_at',
     )
@@ -128,7 +128,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     readonly_fields = (
         'created_at',
         'updated_at',
-        'total_share',  
+        'total_salary',  
     )
     
     fieldsets = (
@@ -136,7 +136,7 @@ class EmployeeAdmin(admin.ModelAdmin):
             'fields': ('full_name', 'phone_number')
         }),
         (_('Professional Details'), {
-            'fields': ('profession', 'share', 'total_share')
+            'fields': ('profession', 'share', 'total_salary')
         }),
         (_('Employer'), {
             'fields': ('employer',)
@@ -171,3 +171,65 @@ class EmployeeAdmin(admin.ModelAdmin):
         if not change:  
             obj.employer = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(EmployeePayment)
+class EmployeePaymentAdmin(admin.ModelAdmin):
+    
+    list_display = (
+        'id',
+        'employee',
+        'amount',
+        'created_at',
+        'get_total_salary',
+    )
+    
+    list_display_links = ('employee', 'amount')
+    
+    list_filter = (
+        'employee',
+        'created_at',
+        'amount',
+    )
+    
+    search_fields = (
+        'employee__full_name',
+        'employee__phone_number',
+    )
+    
+    readonly_fields = (
+        'created_at',
+        'updated_at',
+        'get_total_salary',
+    )
+    
+    fieldsets = (
+        (_('Payment Information'), {
+            'fields': ('employee', 'amount')
+        }),
+        (_('Total Share'), {
+            'fields': ('get_total_salary',),
+            'description': _('Shows the total share of the employee after this payment')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    ordering = ('-created_at',)
+    
+    list_per_page = 25
+    
+    def get_total_salary(self, obj):
+        return obj.employee.total_salary
+    get_total_salary.short_description = _("Employee Total Salary")
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['amount'].required = True
+        return form

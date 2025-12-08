@@ -9,6 +9,9 @@ from apps.accounts.api_endpoints import (
     UserLogoutView,
     # Employee
     CreateEmployeeAPIView,
+    EmployeesListAPIView,
+    EmployeeUpdateAPIView,
+    EmployeeAddSalaryAPIView,
 )
 
 app_name = "accounts"
@@ -21,5 +24,9 @@ urlpatterns = [
     path("profile/", UserGetUpdateProfileAPIView.as_view(), name="get-update-profile"),
     path("logout/", UserLogoutView.as_view(), name="user-logout"),
     # Employee
-    path("employee/add/", CreateEmployeeAPIView.as_view(), name="employee-add")
+    path("employee/add/", CreateEmployeeAPIView.as_view(), name="employee-add"),
+    path("employees/list/", EmployeesListAPIView.as_view(), name="employees-list"),
+    path("employee/<int:pk>/update/", EmployeeUpdateAPIView.as_view(), name="employee-update"),
+    path("employee/salary/", EmployeeAddSalaryAPIView.as_view(), name="employee-add-salary"),
+    
 ]
