@@ -21,6 +21,7 @@ class DesignOption(BaseModel):
 class DesignVariant(BaseModel):
     option = models.ForeignKey(DesignOption,
                                related_name="variants",
+                               on_delete=models.CASCADE,
                                verbose_name=_("Design variant"))
     name = models.CharField(max_length=64,
                             verbose_name=_("Design variant name"))
@@ -88,7 +89,7 @@ class GlassType(BaseModel):
                                 decimal_places=2,
                                 default=Decimal("0.00"),
                                 verbose_name=_("Glass type price"))
-    currency = models.ForeignKey("common.Curency",
+    currency = models.ForeignKey("common.Currency",
                                  on_delete=models.DO_NOTHING,
                                  verbose_name=_("Glass type currency"))
 
@@ -160,7 +161,8 @@ class Product(BaseModel):
     category = models.ForeignKey(Category,
                                 on_delete=models.CASCADE,
                                 related_name="related_products",
-                                verbose_name=_("Product category"))
+                                verbose_name=_("Product category"),
+                                db_index=True)
     material = models.ForeignKey(MaterialType,
                                  on_delete=models.CASCADE,
                                  related_name="relating_products",
