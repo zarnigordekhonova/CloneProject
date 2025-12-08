@@ -16,7 +16,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # path("", home, name="home"),
     # path("api/common/", include("apps.common.urls", namespace="common")),
-    # path("api/accounts/", include("apps.accounts.urls", namespace="accounts")),
+    path("api/accounts/", include("apps.accounts.urls", namespace="accounts")),
     # path("api/company/", include("apps.company.urls", namespace="company")),
     # path("api/materials/", include("apps.materials.urls", namespace="materials")),
     # path("api/orders/", include("apps.orders.urls", namespace="orders")),

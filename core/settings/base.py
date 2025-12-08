@@ -70,7 +70,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "core.urls"
-AUTH_USER_MODEL = "accounts.CustomUser"
+AUTH_USER_MODEL = "accounts.User"
 
 TEMPLATES = [
     {
@@ -170,6 +170,18 @@ REST_FRAMEWORK = {
     "DATETIME_INPUT_FORMATS": ["%Y-%m-%d %H:%M:%S"],
 }
 
+# REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+# REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+# REDIS_DB = os.getenv("REDIS_DB", 0)
+
+# Using Local memory cache for development
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+         "LOCATION": "unique-snowflake",
+    }
+}
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
@@ -191,11 +203,3 @@ SWAGGER_SETTINGS = {
 
 
 LOGIN_REDIRECT_URL = '/'
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
-EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")

@@ -82,7 +82,8 @@ class ProductConfig(BaseModel):
 
 class Provider(BaseModel):
     name = models.CharField(max_length=64,
-                            verbose_name=_("Provider name"))
+                            verbose_name=_("Provider name"),
+                            db_index=True)
     logo = models.FileField(upload_to="media/logo",
                             null=True,
                             blank=True,
