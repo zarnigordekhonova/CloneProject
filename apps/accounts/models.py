@@ -104,24 +104,15 @@ class Employee(BaseModel):
                                   verbose_name=_("Employee profession"))
     share = models.FloatField(verbose_name=_("Share"),
                               help_text=_("Employee's share"))
-    paid_salary = models.DecimalField(max_digits=11, 
-                                      decimal_places=2,
-                                      null=True,
-                                      blank=True,
-                                      verbose_name=_("Paid salary")),
-    total_share = models.DecimalField(max_digits=11,
-                                      decimal_places=2,
-                                      verbose_name=_("Total share"),
-                                      null=True,
-                                      blank=True,
-                                      help_text=_("Total of employee's shares"))
     employer = models.ForeignKey(User,
                                  on_delete=models.CASCADE,
                                  verbose_name=_("Employer"))
     
-    def save(self, *args, **kwargs):
-        self.total_share += self.paid_salary
-        super().save(*args, **kwargs)
+    @property
+    def total_salary(self):
+        return self.payments.aggregate(
+            total=models.Sum("amount")
+        )["total"] or 0
     
     def __str__(self):
         return self.full_name
@@ -129,6 +120,24 @@ class Employee(BaseModel):
     class Meta:
         verbose_name = _("Employee")
         verbose_name_plural = _("Employees")
+
+
+class EmployeePayment(BaseModel):
+    employee = models.ForeignKey(Employee,
+                                 on_delete=models.CASCADE,
+                                 related_name="payments",
+                                 verbose_name=_("Related employee"))
+    amount = models.DecimalField(max_digits=11, 
+                                 decimal_places=2,
+                                 verbose_name=_("Amount"))
+    
+    def __str__(self):
+        return self.employee.full_name
+    
+    class Meta:
+        verbose_name = _("Employee Payment")
+        verbose_name_plural = _("Employee Payments")
+    
     
 
 
