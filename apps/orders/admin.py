@@ -1,8 +1,14 @@
-# from django.contrib import admin
-# from django.utils.translation import gettext_lazy as _
-# from django.core.exceptions import ValidationError
+from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 
-# from apps.orders.models import NewOrder, OrderDetail, Order
+from apps.orders.models import (NewOrder, 
+                                OrderDetail, 
+                                Order, 
+                                WindowOrder, 
+                                WindowTemplate, 
+                                TemplateSection,
+                                WindowOrderSection)
 
 
 # class OrderDetailInline(admin.TabularInline):
@@ -170,3 +176,90 @@
 #             'classes': ('collapse',),
 #         })
 #     )
+
+
+class TemplateSectionInline(admin.TabularInline):
+    model = TemplateSection
+    extra = 1  
+    fields = ('section_order', 'orientation', 'width_ratio', 'height_ratio')
+
+
+@admin.register(WindowTemplate)
+class WindowTemplateAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'name', 
+        'base_width_mm', 
+        'base_height_mm', 
+        'base_price_per_m2'
+    )
+    search_fields = ('name',)
+    inlines = [TemplateSectionInline]
+
+
+@admin.register(WindowOrder)
+class WindowOrderAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'template', 
+        'width_mm', 
+        'height_mm', 
+        'total_price', 
+        'display_area'
+    )
+    list_filter = ('template',)
+    search_fields = (
+        'template__name', 
+        'width_mm', 
+        'height_mm'
+    )
+    readonly_fields = (
+        'total_price', 
+        'display_area'
+    )
+    
+    def display_area(self, obj):
+        return f"{obj.calculate_area_m2():.2f} m²"
+    display_area.short_description = "Area (m²)"
+
+
+@admin.register(TemplateSection)
+class TemplateSectionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'template', 'section_order', 'orientation', 'width_ratio', 'height_ratio')
+    list_filter = ('template', 'orientation')
+    search_fields = ('template__name',)
+
+
+@admin.register(WindowOrderSection)
+class WindowOrderSectionAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'order', 
+        'section_order', 
+        'width_mm', 
+        'height_mm', 
+        'area_m2'
+    )
+    
+    list_filter = (
+        'order__template', 
+        'order',           
+    )
+    
+    search_fields = (
+        'order__id', 
+        'order__template__name'
+    )
+    
+    readonly_fields = (
+        'area_m2',
+    )
+    
+    fieldsets = (
+        (None, {
+            'fields': ('order', 'template_section', 'section_order')
+        }),
+        ('Dimensions and Area', {
+            'fields': ('width_mm', 'height_mm', 'area_m2')
+        }),
+    )

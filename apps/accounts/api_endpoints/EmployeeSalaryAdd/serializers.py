@@ -36,6 +36,6 @@ class EmployeeAddSalarySerializer(serializers.ModelSerializer):
 
 
     def get_date(self, obj):
-         return obj.created_at.date if obj.created_at else None
+         return obj.created_at.date() if obj.created_at else None
 
 

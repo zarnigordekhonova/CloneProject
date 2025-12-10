@@ -9,3 +9,5 @@ from .EmployeeAdd import * # noqa
 from .EmployeeList import * # noqa
 from .EmployeeUpdate import * # noqa
 from .EmployeeSalaryAdd import * # noqa
+from .EmployeeSalariesHistory import * # noqa
+from .EmployeeDelete import * # noqa

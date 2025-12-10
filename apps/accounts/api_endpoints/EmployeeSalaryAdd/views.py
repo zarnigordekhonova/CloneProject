@@ -15,10 +15,6 @@ class EmployeeAddSalaryAPIView(CreateAPIView):
         employee_id = self.request.data.get("employee")
         employee = Employee.objects.filter(id=employee_id).first()
 
-        print("EMPLOYEE_ID: ", employee_id)
-        print("EMPLOYEE: ", employee)
-        print("EMPLOYer_data: ", employee.employer)
-
         if employee.employer != self.request.user:
             raise PermissionDenied("You can add salary only to your employees.")
         
