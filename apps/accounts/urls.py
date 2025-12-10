@@ -12,6 +12,8 @@ from apps.accounts.api_endpoints import (
     EmployeesListAPIView,
     EmployeeUpdateAPIView,
     EmployeeAddSalaryAPIView,
+    EmployeeSalariesHistoryAPIView,
+    EmployeeDeleteAPIView,
 )
 
 app_name = "accounts"
@@ -28,5 +30,10 @@ urlpatterns = [
     path("employees/list/", EmployeesListAPIView.as_view(), name="employees-list"),
     path("employee/<int:pk>/update/", EmployeeUpdateAPIView.as_view(), name="employee-update"),
     path("employee/salary/", EmployeeAddSalaryAPIView.as_view(), name="employee-add-salary"),
+    path("employee/<int:employee_id>/salaries/history/", 
+         EmployeeSalariesHistoryAPIView.as_view(),
+         name="employee-salaries-history"),
+    path("employee/<int:employee_id>/delete/", EmployeeDeleteAPIView.as_view(), name="employee-delete   ")
+    
     
 ]

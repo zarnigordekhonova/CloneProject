@@ -144,4 +144,133 @@ class Order(BaseModel):
                               choices=OrderStatusChoices.choices,
                               default=OrderStatusChoices.WAITING,
                               verbose_name=_("Order status"))
+
+
+# NEW MODELS
+
+
+# Umumiy deraza shablonlari uchun model
+class WindowTemplate(BaseModel):
+    name = models.CharField(max_length=128, 
+                            null=True,
+                            blank=True,
+                            verbose_name=_("Template name"))
+    # eni hajmi
+    base_width_mm = models.PositiveIntegerField(verbose_name=_("Base width"))
+    # bo'yi hajmi
+    base_height_mm = models.PositiveSmallIntegerField(verbose_name=_("Base height"))
+    # narxi metr kvadratga qarab belgilanadi
+    base_price_per_m2 = models.DecimalField(max_digits=10,
+                                            decimal_places=2,
+                                            verbose_name=_("Base price"),
+                                            help_text=_("Window's base price per m2."))
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = _("Window Template")
+        verbose_name_plural = _("Window Templates")
+
+
+# Bu shablonni ichidagi qismlari uchun model
+class TemplateSection(BaseModel):
+    template = models.ForeignKey(WindowTemplate,
+                                 on_delete=models.CASCADE,
+                                 related_name="sections",
+                                 verbose_name=_("Related template"))
+    # har bitta qismni tartib raqami
+    section_order = models.PositiveIntegerField(verbose_name=_("Section order number"))
+    # qism vertikal/gorizontal tushishini belgilash uchun
+    orientation = models.CharField(max_length=15, 
+                                   choices=(("vertical", "Vertical"),
+                                            ("horizontal", "Horizontal")))
+    # o'sha qismni eni hajmi
+    # admin panelda, bu field uchun qiymat 0-1 oralig'ida kiritilishi kerak, ya'ni
+    # agar eni yarim metr bo'lsa, millimetrda 500 emas, 0.5 sifatida berish kerak
+    width_ratio = models.FloatField(null=True,
+                                    blank=True,
+                                    verbose_name=_("Section's width size"))
+    # bo'yi hajmi
+    # height_ratio uchun ham qiymat 0-1 oralig'ida berilishi kerak
+    height_ratio = models.FloatField(null=True,
+                                    blank=True,
+                                    verbose_name=_("Section's height size"))
+    
+    def __str__(self):
+        return f"Section {self.section_order} of {self.template.name}"
+    
+    class Meta:
+        verbose_name = _("Template Section")
+        verbose_name_plural = _("Template Sections")
+
+
+# Bunda foydalanuvchi buyurtmasi saqlanadi, foydalanuvchi shablonni idsini,
+# uni eni, bo'yi hajmini kiritadi, umumiy narxi avtomatik hisoblanadi. 
+class WindowOrder(BaseModel):
+    template = models.ForeignKey(WindowTemplate,
+                                 on_delete=models.CASCADE,
+                                 verbose_name=_("Template"))
+    width_mm = models.PositiveIntegerField(verbose_name=_("Order's width size."))
+    height_mm = models.PositiveIntegerField(verbose_name=_("Order's height size."))
+    total_price = models.DecimalField(max_digits=12, 
+                                      decimal_places=2,
+                                      blank=True,
+                                      verbose_name=_("Order's total price"))
+    
+    def calculate_area_m2(self):
+        width_m = Decimal(self.width_mm) / Decimal(1000)
+        height_m = Decimal(self.height_mm) / Decimal(1000)
+        return width_m * height_m
+    
+    def calculate_price(self):
+        area = self.calculate_area_m2()
+        return area * self.template.base_price_per_m2
+    
+    def save(self, *args, **kwargs):
+        self.total_price = self.calculate_price()
+        super().save(*args, **kwargs)
+
+
+# Bu modelda agar foydalanuvchi shablondagi qismlarni eni va hajmini ham o'zi
+# o'zgartirib kiritsa, shu qismlarni ma'lumoti saqlanadi
+class WindowOrderSection(BaseModel):
+    order = models.ForeignKey(WindowOrder,
+                              on_delete=models.CASCADE,
+                              related_name="sections",
+                              verbose_name=_("Related order"))
+    # Haqiqiy shablondagi qaysi qismga bog'lanyapti
+    template_section = models.ForeignKey(TemplateSection,
+                                         on_delete=models.SET_NULL,
+                                         null=True,
+                                         blank=True,
+                                         related_name="order_sections",
+                                         verbose_name=_("Original template section"))
+    section_order = models.PositiveIntegerField(verbose_name=_("Section order number"))
+    width_mm = models.PositiveIntegerField(null=True,
+                                           blank=True,
+                                           verbose_name=_("Section width in mm"))
+    height_mm = models.PositiveIntegerField(null=True,
+                                            blank=True,
+                                            verbose_name=_("Section height in mm"))
+    # O'sha qismni yuzasi uchun
+    area_m2 = models.DecimalField(max_digits=10,
+                                  decimal_places=4,
+                                  verbose_name=_("Area m²"))
+
+    class Meta:
+        verbose_name = _("Window order section")
+        verbose_name_plural = _("Window order sections")
+
+    def __str__(self):
+        return f"Section {self.section_order} of Order {self.order_id}"
+
+    @property
+    def area_m2(self):
+        width_m = Decimal(self.width_mm) / Decimal(1000)
+        height_m = Decimal(self.height_mm) / Decimal(1000)
+        return width_m * height_m
+
+
+
     
