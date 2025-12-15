@@ -190,6 +190,7 @@ class Template(BaseModel):
 # Bu shablonni ichidagi qismlari uchun model
 class TemplateSection(BaseModel):
 
+    # eshikni ichidagi qismlari uchun 
     class SectionType(models.TextChoices):
         TOP = "TOP", _("Top")
         MIDDLE = "MIDDLE", _("Middle")
