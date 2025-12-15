@@ -148,13 +148,21 @@ class Order(BaseModel):
 
 # NEW MODELS
 
+# Umumiy deraza/eshik/fortochka shablonlari uchun model
+class Template(BaseModel):
+    
+    class TemplateType(models.TextChoices):
+        WINDOW = "WINDOW", _("Window")
+        DOOR = "DOOR", _("Door")
+        FORTOCHKA = "FORTOCHKA", _("Fortochka")
 
-# Umumiy deraza shablonlari uchun model
-class WindowTemplate(BaseModel):
     name = models.CharField(max_length=128, 
                             null=True,
                             blank=True,
                             verbose_name=_("Template name"))
+    template_type = models.CharField(max_length=32,
+                                     choices=TemplateType.choices,
+                                     verbose_name=_("Template type"))
     # eni hajmi
     base_width_mm = models.PositiveIntegerField(verbose_name=_("Base width"))
     # bo'yi hajmi
@@ -163,28 +171,50 @@ class WindowTemplate(BaseModel):
     base_price_per_m2 = models.DecimalField(max_digits=10,
                                             decimal_places=2,
                                             verbose_name=_("Base price"),
-                                            help_text=_("Window's base price per m2."))
+                                            help_text=_("Window/Door/Fortochka's base price per m2."))
     
     def __str__(self):
-        return self.name
+        return self.name if self.name else self.id
     
     class Meta:
-        verbose_name = _("Window Template")
-        verbose_name_plural = _("Window Templates")
+        verbose_name = _("Template")
+        verbose_name_plural = _("Templates")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "template_type"],
+                name="unique_name_per_template_type"
+            )
+        ]
 
 
 # Bu shablonni ichidagi qismlari uchun model
 class TemplateSection(BaseModel):
-    template = models.ForeignKey(WindowTemplate,
+
+    class SectionType(models.TextChoices):
+        TOP = "TOP", _("Top")
+        MIDDLE = "MIDDLE", _("Middle")
+        BOTTOM = "BOTTOM", _("Bottom")
+        WHOLE = "WHOLE", _("Whole")
+
+    class OrientationType(models.TextChoices):
+        VERTICAL = "VERTICAL", _("Vertical")
+        HORIZONTAL = "HORIZONTAL", _("Horizontal")
+
+    template = models.ForeignKey(Template,
                                  on_delete=models.CASCADE,
                                  related_name="sections",
                                  verbose_name=_("Related template"))
+    has_glass = models.BooleanField(default=True,
+                                    verbose_name=_("Has section glass"))
+    section_type = models.CharField(max_length=32,
+                                    choices=SectionType.choices,
+                                    verbose_name=_("Section type"))
     # har bitta qismni tartib raqami
     section_order = models.PositiveIntegerField(verbose_name=_("Section order number"))
     # qism vertikal/gorizontal tushishini belgilash uchun
     orientation = models.CharField(max_length=15, 
-                                   choices=(("vertical", "Vertical"),
-                                            ("horizontal", "Horizontal")))
+                                   choices=OrientationType.choices,
+                                   verbose_name=_("Orientation type"))
     # o'sha qismni eni hajmi
     # admin panelda, bu field uchun qiymat 0-1 oralig'ida kiritilishi kerak, ya'ni
     # agar eni yarim metr bo'lsa, millimetrda 500 emas, 0.5 sifatida berish kerak
@@ -208,7 +238,7 @@ class TemplateSection(BaseModel):
 # Bunda foydalanuvchi buyurtmasi saqlanadi, foydalanuvchi shablonni idsini,
 # uni eni, bo'yi hajmini kiritadi, umumiy narxi avtomatik hisoblanadi. 
 class WindowOrder(BaseModel):
-    template = models.ForeignKey(WindowTemplate,
+    template = models.ForeignKey(Template,
                                  on_delete=models.CASCADE,
                                  verbose_name=_("Template"))
     width_mm = models.PositiveIntegerField(verbose_name=_("Order's width size."))
@@ -217,6 +247,10 @@ class WindowOrder(BaseModel):
                                       decimal_places=2,
                                       blank=True,
                                       verbose_name=_("Order's total price"))
+    
+    class Meta:
+        verbose_name = _("Window Order")
+        verbose_name_plural = _("Window Orders")
     
     def calculate_area_m2(self):
         width_m = Decimal(self.width_mm) / Decimal(1000)
@@ -272,5 +306,69 @@ class WindowOrderSection(BaseModel):
         return width_m * height_m
 
 
-
+# Door models
+class DoorOrder(BaseModel):
+    template = models.ForeignKey(Template,
+                                 on_delete=models.CASCADE,
+                                 verbose_name=_("Template"))
+    width_mm = models.PositiveIntegerField(verbose_name=_("Order's width size."))
+    height_mm = models.PositiveIntegerField(verbose_name=_("Order's height size."))
+    total_price = models.DecimalField(max_digits=12, 
+                                      decimal_places=2,
+                                      blank=True,
+                                      verbose_name=_("Order's total price"))
     
+    class Meta:
+        verbose_name = _("Door Order")
+        verbose_name_plural = _("Door Orders")
+    
+    def calculate_area_m2(self):
+        width_m = Decimal(self.width_mm) / Decimal(1000)
+        height_m = Decimal(self.height_mm) / Decimal(1000)
+        return width_m * height_m
+    
+    def calculate_price(self):
+        area = self.calculate_area_m2()
+        return area * self.template.base_price_per_m2
+    
+    def save(self, *args, **kwargs):
+        self.total_price = self.calculate_price()
+        super().save(*args, **kwargs)
+
+
+class DoorOrderSection(BaseModel):
+    order = models.ForeignKey(DoorOrder,
+                              on_delete=models.CASCADE,
+                              related_name="door_sections",
+                              verbose_name=_("Related order"))
+    # Haqiqiy shablondagi qaysi qismga bog'lanyapti
+    template_section = models.ForeignKey(TemplateSection,
+                                         on_delete=models.SET_NULL,
+                                         null=True,
+                                         blank=True,
+                                         related_name="door_order_sections",
+                                         verbose_name=_("Original template section"))
+    section_order = models.PositiveIntegerField(verbose_name=_("Section order number"))
+    width_mm = models.PositiveIntegerField(null=True,
+                                           blank=True,
+                                           verbose_name=_("Section width in mm"))
+    height_mm = models.PositiveIntegerField(null=True,
+                                            blank=True,
+                                            verbose_name=_("Section height in mm"))
+    # O'sha qismni yuzasi uchun
+    area_m2 = models.DecimalField(max_digits=10,
+                                  decimal_places=4,
+                                  verbose_name=_("Area m²"))
+
+    class Meta:
+        verbose_name = _("Door order section")
+        verbose_name_plural = _("Door order sections")
+
+    def __str__(self):
+        return f"Section {self.section_order} of Order {self.order_id}"
+
+    @property
+    def area_m2(self):
+        width_m = Decimal(self.width_mm) / Decimal(1000)
+        height_m = Decimal(self.height_mm) / Decimal(1000)
+        return width_m * height_m
