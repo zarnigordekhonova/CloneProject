@@ -33,7 +33,6 @@ class DoorOrderSerializer(serializers.ModelSerializer):
 
         order = DoorOrder.objects.create(**validated_data)
 
-
         if sections_data:
             for sec in sections_data:
                 tmp_section = template_sections_map.get(sec["section_order"])
@@ -41,8 +40,6 @@ class DoorOrderSerializer(serializers.ModelSerializer):
                 if tmp_section.orientation == "vertical":
                     width_mm = sec.get("width_mm", int(order.width_mm * tmp_section.width_ratio))
                     height_mm = sec.get("height_mm", order.height_mm)
-
-
                 else:
                     width_mm = sec.get("width_mm", order.width_mm)
                     height_mm = sec.get("height_mm", int(order.height_mm * tmp_section.height_ratio))
@@ -79,7 +76,7 @@ class DoorOrderSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         base_price = instance.template.base_price_per_m2
         total_price = 0
-        total_price = sum(sec.area_m2 * base_price for sec in instance.sections.all())
+        total_price = sum(sec.area_m2 * base_price for sec in instance.door_sections.all())
 
         data["total_price"] = total_price
         return data
