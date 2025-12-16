@@ -20,16 +20,24 @@ class NewOrder(BaseModel):
                                     unique=True,
                                     verbose_name=_("Order number"))
     quantity = models.PositiveIntegerField(verbose_name=_("Order quantity"))
+
+    # hozircha bular ishlatilinmaydi.
     total_price = models.DecimalField(max_digits=11,
                                       decimal_places=2,
+                                      null=True,
+                                      blank=True,
                                       verbose_name=_("Order's total price"))
     # tannarx
     cost_price = models.DecimalField(max_digits=11,
                                      decimal_places=2,
+                                     null=True,
+                                     blank=True,
                                      verbose_name=_("Cost price of order"))
     # foyda
     profit = models.DecimalField(max_digits=11,
                                  decimal_places=2,
+                                 null=True,
+                                 blank=True,
                                  verbose_name=_("Profit from the order"))
     discount_price = models.DecimalField(max_digits=11,
                                          decimal_places=2,
@@ -58,7 +66,7 @@ class NewOrder(BaseModel):
         verbose_name_plural = _("New Orders")
 
     def __str__(self):
-        return f"{self.order_type} - {self.total_price}"
+        return f"{self.order_type} - {self.order_number}"
     
 
 class OrderDetail(BaseModel):
@@ -71,8 +79,12 @@ class OrderDetail(BaseModel):
                               on_delete=models.CASCADE,
                               related_name="order_detail",
                               verbose_name=_("Main order"))
-    height_size = models.FloatField(verbose_name=_("Order's height size"))
-    width_size = models.FloatField(verbose_name=_("Order's width size"))
+    window_order = models.OneToOneField("orders.WindowOrder",
+                                        null=True, 
+                                        blank=True,
+                                        on_delete=models.CASCADE,
+                                        related_name="window_detail",
+                                        verbose_name=_("Window order detail"))
     material = models.ForeignKey("materials.MaterialType",
                                  on_delete=models.DO_NOTHING,
                                  verbose_name=_("Order material"))
@@ -85,7 +97,7 @@ class OrderDetail(BaseModel):
     provider = models.ForeignKey("company.Provider",
                                  on_delete=models.DO_NOTHING,
                                   verbose_name=_("Provider"))
-    include_waster_percentage = models.BooleanField(default=True,
+    include_waste_percentage = models.BooleanField(default=True,
                                                     verbose_name=_("Include waste percentage"))
     waste_percentage = models.FloatField(null=True,
                                          blank=True,
@@ -116,8 +128,10 @@ class OrderDetail(BaseModel):
                                        verbose_name=_("Order design variant"))
     shelf_width = models.FloatField(verbose_name=_("Shelf width"))
     has_handle = models.BooleanField(default=False,
-                                     verbose_name=_("Order handle"))
+                                     verbose_name=_("Order has handle"))
     handle_type = models.ForeignKey("materials.HandleType",
+                                    null=True,
+                                    blank=True,
                                     on_delete=models.DO_NOTHING,
                                     verbose_name=_("Order's handle type"))
     
@@ -126,7 +140,7 @@ class OrderDetail(BaseModel):
         verbose_name_plural = _("Order Details")
 
     def __str__(self):
-        return self.order
+        return f"{self.order.id} - {self.window_order.id}"
     
 
 class Order(BaseModel):
@@ -136,6 +150,10 @@ class Order(BaseModel):
         IN_PROCESS = "IN_PROCESS", _("In_process")
         IN_DEBT = "IN_DEBT", _("In_debt")
 
+    order = models.ForeignKey(OrderDetail,
+                              on_delete=models.CASCADE,
+                              related_name="order_related",
+                              verbose_name=_("Related order"))
     total_orders_number = models.PositiveIntegerField(verbose_name=_("Total number of orders"))
     total_price = models.DecimalField(max_digits=11,
                                       decimal_places=2,
@@ -254,11 +272,17 @@ class WindowOrder(BaseModel):
         verbose_name_plural = _("Window Orders")
     
     def calculate_area_m2(self):
+        if not self.width_mm and self.height_mm:
+            return Decimal("0.00")
+        
         width_m = Decimal(self.width_mm) / Decimal(1000)
+        print("WIDTH_M", self.width_mm)
         height_m = Decimal(self.height_mm) / Decimal(1000)
         return width_m * height_m
     
     def calculate_price(self):
+        if not self.template and self.width_mm and self.height_mm:
+            return Decimal("0.00")
         area = self.calculate_area_m2()
         return area * self.template.base_price_per_m2
     

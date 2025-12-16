@@ -110,7 +110,7 @@ class SashProfilType(BaseModel):
         verbose_name_plural = _("Sash Profil Types")
 
     def __str__(self):
-        return self.id
+        return self.image.url
     
 
 class FrameProfilType(BaseModel):
@@ -138,7 +138,7 @@ class HandleType(BaseModel):
         verbose_name_plural = _("Handle Types")
 
     def __str__(self):
-        return self.id
+        return self.image.url
     
 
 class Category(BaseModel):
