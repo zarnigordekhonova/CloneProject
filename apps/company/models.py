@@ -1,9 +1,12 @@
 from decimal import Decimal
 
 from django.db import models 
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import BaseModel
+
+User = get_user_model()
 
 
 class Dealer(BaseModel):
@@ -28,6 +31,10 @@ class Company(BaseModel):
     dealer = models.ForeignKey(Dealer,
                                on_delete=models.DO_NOTHING,
                                verbose_name=_("Company dealer"))
+    master = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name="company",
+                               verbose_name=_("Company owner"))
     free_delivery = models.BooleanField(default=True,
                                         verbose_name=_("Free delivery"))
     telegram_link = models.CharField(max_length=32,
@@ -40,7 +47,7 @@ class Company(BaseModel):
         verbose_name_plural = _("Companies")
 
     def __str__(self):
-        return self.dealer.name
+        return f"{self.master.full_name} | {self.dealer.name}"
     
 
 class ProductConfig(BaseModel):

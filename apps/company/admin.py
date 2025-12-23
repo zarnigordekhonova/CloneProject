@@ -35,6 +35,7 @@ class CompanyAdmin(admin.ModelAdmin):
     
     list_display = (
         "id",
+        "master",
         "dealer_name", 
         "region_name", 
         "district_name", 
@@ -59,7 +60,7 @@ class CompanyAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (None, {
-            'fields': ("dealer", "free_delivery", "telegram_link"),
+            'fields': ("dealer", "master", "free_delivery", "telegram_link"),
         }),
         ('Location', {
             'fields': ("region", "district"),

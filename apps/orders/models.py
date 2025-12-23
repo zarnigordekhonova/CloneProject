@@ -243,12 +243,15 @@ class NewOrder(BaseModel):
     order_type = models.CharField(max_length=32,
                                   choices=OrderTypeChoices.choices,
                                   verbose_name=_("Order type"))
+    company = models.ForeignKey("company.Company",
+                                on_delete=models.CASCADE,
+                                related_name="new_order",
+                                verbose_name=_("Company order"))
     order_number = models.CharField(max_length=32,
                                     unique=True,
                                     verbose_name=_("Order number"))
     quantity = models.PositiveIntegerField(verbose_name=_("Order quantity"))
-
-    # hozircha bular ishlatilinmaydi.
+    # serializers da total_price WindowOrder dagi total_price dan olinadi.
     total_price = models.DecimalField(max_digits=11,
                                       decimal_places=2,
                                       null=True,
@@ -295,14 +298,16 @@ class NewOrder(BaseModel):
     def __str__(self):
         return f"{self.order_type} - {self.order_number}"
     
-    # def save(self):
-    #     self.total_price = 
-    
 
 class OrderDetail(BaseModel):
     class MetalThicknessChoices(models.TextChoices):
         OPTION_1 = "1.0 mm", _("1.0 mm")
         OPTION_2 = "1.2 mm", _("1.2 mm")
+
+    class MaterialTypeChoices(models.TextChoices):
+        ALUMIN = "ALUMIN", _("Alumin")
+        PLAST = "PLAST", _("Plast")
+        THERMO = "THERMO", _("Thermo")
 
 
     order = models.ForeignKey(NewOrder,
@@ -315,6 +320,9 @@ class OrderDetail(BaseModel):
                                         on_delete=models.CASCADE,
                                         related_name="window_detail",
                                         verbose_name=_("Window order detail"))
+    material_type = models.CharField(max_length=32,
+                                     choices=MaterialTypeChoices.choices,
+                                     verbose_name=_("Order's material type"))
     material = models.ForeignKey("materials.MaterialType",
                                  on_delete=models.DO_NOTHING,
                                  verbose_name=_("Order material"))

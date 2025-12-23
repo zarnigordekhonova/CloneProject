@@ -10,11 +10,12 @@ class CompanySerializer(serializers.ModelSerializer):
             "id",
             "region",
             "district",
+            "master",
             "dealer",
             "free_delivery",
             "telegram_link"
         )
-        read_only_fields = ("id", )
+        read_only_fields = ("id", "master",)
 
 
 class ProductConfigSerializer(serializers.ModelSerializer):

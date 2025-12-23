@@ -21,7 +21,7 @@ class WindowOrderSerializer(serializers.ModelSerializer):
         read_only_fields = ["total_price"]
 
     def create(self, validated_data):
-        print("VALIDATED DATA IN WINDOW ORDER SERIALIZER:", validated_data)
+        # print("VALIDATED DATA IN WINDOW ORDER SERIALIZER:", validated_data)
         # Foydalanuvchi shablon ichidagi qismlar razmerini o'zi belgilab ham jo'natishi mumkin
         sections_data = validated_data.pop("sections", [])
 
