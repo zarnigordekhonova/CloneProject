@@ -208,7 +208,9 @@ class WindowOrderAdmin(admin.ModelAdmin):
         'width_mm', 
         'height_mm', 
         'total_price', 
-        'display_area'
+        'display_area',
+        'created_at',
+        'updated_at'
     )
     list_filter = ('template',)
     search_fields = (

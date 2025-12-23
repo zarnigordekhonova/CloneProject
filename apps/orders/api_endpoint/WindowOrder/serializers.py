@@ -21,6 +21,7 @@ class WindowOrderSerializer(serializers.ModelSerializer):
         read_only_fields = ["total_price"]
 
     def create(self, validated_data):
+        print("VALIDATED DATA IN WINDOW ORDER SERIALIZER:", validated_data)
         # Foydalanuvchi shablon ichidagi qismlar razmerini o'zi belgilab ham jo'natishi mumkin
         sections_data = validated_data.pop("sections", [])
 
@@ -89,10 +90,10 @@ class WindowOrderSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        base_price = instance.template.base_price_per_m2
-        total_price = 0
-        total_price = sum(sec.area_m2 * base_price for sec in instance.sections.all())
-
-        data["total_price"] = total_price
+        if instance.sections.exists():
+            base_price = instance.template.base_price_per_m2
+            total_price = sum(sec.area_m2 * base_price for sec in instance.sections.all())
+            data["total_price"] = total_price
+        else:
+            data["total_price"] = float(instance.total_price)
         return data
-

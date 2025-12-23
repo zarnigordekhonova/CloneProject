@@ -46,8 +46,14 @@ class OrderDetailCreateSerializer(serializers.ModelSerializer):
             window_order=window_order,
             **validated_data
         )
-
         return order_detail
+    
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     if data["has_handle"] == True:
+
+        
+    
 
 
 
