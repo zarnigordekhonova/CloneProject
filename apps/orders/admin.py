@@ -80,12 +80,14 @@ class NewOrderInline(admin.TabularInline):
 class NewOrderAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "company",
         "order_number", 
         "order_type", 
         "order_owner", 
         "phone_number", 
         "total_price", 
         "profit",
+        "cost_price",
         "created_at",
     )
     list_filter = ("order_type", "created_at")

@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
-from apps.orders.models import OrderDetail, NewOrder, WindowOrder
+from apps.company.models import ProductConfig
+from apps.orders.models import OrderDetail, NewOrder
 from apps.orders.api_endpoint.NewOrder.serializers import NewOrderSerializer
 from apps.orders.api_endpoint.WindowOrder.serializers import WindowOrderSerializer
 
@@ -15,6 +18,7 @@ class OrderDetailCreateSerializer(serializers.ModelSerializer):
             "order",
             "window_order",
             "material",
+            "material_type",
             "glass_layer",
             "glass_type",
             "provider",
@@ -38,7 +42,12 @@ class OrderDetailCreateSerializer(serializers.ModelSerializer):
         order_data = validated_data.pop("order")
         window_order_data = validated_data.pop("window_order")
 
-        order = NewOrder.objects.create(**order_data)
+        company = self.context["request"].user.company.first()
+
+        order = NewOrder.objects.create(
+            company=company,
+            **order_data
+            )
         window_order = WindowOrderSerializer().create(window_order_data)
 
         order_detail = OrderDetail.objects.create(
@@ -46,11 +55,36 @@ class OrderDetailCreateSerializer(serializers.ModelSerializer):
             window_order=window_order,
             **validated_data
         )
+        
+        # calculation with master's profit values
+        config = ProductConfig.objects.filter(
+            company=company, 
+            product_type=order_detail.material_type
+        ).first()
+
+        base_cost = window_order.total_price 
+        profit_amount = Decimal("0.00")
+
+        if config:
+            # Percentage Profit
+            if config.is_in_percentage:
+                profit_amount = base_cost * (config.profit / Decimal("100"))
+
+            # Per Meter Profit
+            elif config.is_in_meter:
+                width_m = Decimal(window_order.width) / Decimal("1000")
+                height_m = Decimal(window_order.height) / Decimal("1000")
+            
+                area_m2 = width_m * height_m
+                profit_amount = area_m2 * config.profit
+
+
+        order.cost_price = base_cost           # window's base price
+        order.profit = profit_amount           # master's profit value (ustaning qancha foyda olishi)
+        order.total_price = base_cost + profit_amount  # overall price (buyurtmani umumiy narxi)
+        order.save()
         return order_detail
     
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     if data["has_handle"] == True:
 
         
     

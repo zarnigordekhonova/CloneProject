@@ -12,6 +12,9 @@ class CompanyCreateAPIView(CreateAPIView):
     serializer_class = CompanyProductConfigSerializer
     permission_classes = [IsAuthenticated, ]
 
+    def perform_create(self, serializer):
+        serializer.save(master=self.request.user)
+
 
 
 __all__ = [
